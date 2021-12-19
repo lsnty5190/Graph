@@ -31,8 +31,7 @@ class Walker:
 
     def simulate_walks(self, num_walks, walk_length, workers=1, verbose=0):
 
-        # nodes: List = torch.arange(self.G.num_nodes)
-        nodes = torch.IntTensor([0,1])
+        nodes: List = torch.arange(self.G.num_nodes)
 
         partition_num = lambda num, workers: [num//workers]*workers if num % workers == 0 else [num//workers]*workers + [num % workers]
 
