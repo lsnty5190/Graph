@@ -1,10 +1,15 @@
+import itertools
 import random
+from typing import List
+from joblib.parallel import delayed
 
 import torch
 from torch.functional import Tensor
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.data import Data
+
+from joblib import Parallel
 
 
 dataset = Planetoid(root='./datasets', name='Cora')
@@ -15,16 +20,30 @@ print(graph.num_nodes)
 
 class Walker:
 
-    def __init__(self, G, walker='random_walk') -> None:
-        super().__init__()
+    def __init__(self, G) -> None:
 
         self.G: Data = G
-        self.walker = walker
 
     def _find_nbrs(self, src_node) -> Tensor:
 
         nbrs: Tensor = self.G.edge_index[1, torch.where(self.G.edge_index[0]==src_node)[0]]
         return nbrs.unique()
+
+    def simulate_walks(self, num_walks, walk_length, workers=1, verbose=0):
+
+        # nodes: List = torch.arange(self.G.num_nodes)
+        nodes = torch.IntTensor([0,1])
+
+        partition_num = lambda num, workers: [num//workers]*workers if num % workers == 0 else [num//workers]*workers + [num % workers]
+
+        out = Parallel(n_jobs=workers, verbose=verbose, )(
+            delayed(self._simulate_walks)(nodes, num, walk_length)
+            for num in partition_num(num_walks, workers)
+        )
+
+        walks = list(itertools.chain(*out))
+
+        return torch.tensor(walks)
 
     def _simulate_walks(self, nodes, num_walks, walk_length):
         
@@ -49,12 +68,13 @@ class Walker:
             if cur_nbrs.size() == torch.Size([0]):
                 break # no nbrs
             else:
-                walks.append(int(random.choice(cur_nbrs)))
+                walks.append(random.choice(cur_nbrs))
 
         return walks
 
 walker = Walker(graph)
 nodes = torch.IntTensor([0,1])
-walks = walker._simulate_walks(nodes, 2, 5)
+walks = walker.simulate_walks(num_walks=5, walk_length=5, workers=2)
 print(walks)
+
 
