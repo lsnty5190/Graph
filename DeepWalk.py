@@ -114,7 +114,7 @@ class DeepWalk:
         if self.w2v_model is None:
             raise NotImplementedError
 
-        for word in torch.arange(self.G.num_nodes):
+        for word in range(self.G.num_nodes):
             self._embeddings[word] = self.w2v_model.wv[word]
 
         return self._embeddings
