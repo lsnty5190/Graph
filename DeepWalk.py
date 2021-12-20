@@ -2,12 +2,13 @@ import itertools
 import random
 from typing import List
 import argparse
-from warnings import WarningMessage
+import numpy as np
 
 from gensim.models import Word2Vec
 
 import torch
 from torch.functional import Tensor
+from torch.serialization import save
 from torch.utils.data.dataset import DFIterDataPipe
 
 from torch_geometric.datasets import Planetoid
@@ -109,13 +110,19 @@ class DeepWalk:
 
         print("Done!")
 
-    def get_embeddings(self, ):
+    def get_embeddings(self, save_path=None):
 
-        if self.w2v_model is None:
-            raise NotImplementedError
+        if self.w2v_model is None: 
+            if save_path is None:
+                raise NotImplementedError
+            else:
+                self._embeddings = np.load(save_path, allow_pickle=True)
+        else:
+            for word in range(self.G.num_nodes):
+                self._embeddings[word] = self.w2v_model.wv[word]
 
-        for word in range(self.G.num_nodes):
-            self._embeddings[word] = self.w2v_model.wv[word]
+            if save_path is not None:
+                np.save(save_path, self._embeddings, allow_pickle=True)
 
         return self._embeddings
 
@@ -147,7 +154,7 @@ model = DeepWalk(
     w2v_args=w2v_args
 )
 model.train()
-embeddings = model.get_embeddings()
+embeddings = model.get_embeddings(save_path='./embeddings/w2v.npy')
     
 
     
