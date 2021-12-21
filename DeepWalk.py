@@ -8,8 +8,6 @@ from gensim.models import Word2Vec
 
 import torch
 from torch.functional import Tensor
-from torch.serialization import save
-from torch.utils.data.dataset import DFIterDataPipe
 
 from torch_geometric.datasets import Planetoid
 from torch_geometric.data import Data
@@ -101,6 +99,7 @@ class DeepWalk:
         self.w2v_model = Word2Vec(
             sentences=self.sentences,
             vector_size=self.w2v_args.embed_size,
+            min_count=0,
             sg=1, # skip gram
             hs=1, # deepwalk use Hierarchical Softmax
             workers=self.w2v_args.workers,
